@@ -34,13 +34,15 @@ classes, classes_counts = torch.unique(labels, return_counts = True)
 print("classes:", classes, classes_counts)
 
 gini_values_hashmap = {} # Maps gini vectors to their corresponding gini values
-feature_gini_vectors_hashmap = {} # Maps each feature to their gini vectors
+feature_gini_vectors_hashmap = {i:[] for i in range(0, num_features)} # Maps each feature to their gini vectors
 
 for feature_idx in range(0, num_features):
+    # Extract the feature column from the "data" matrix
     feature_column = data[torch.arange(num_entries), torch.zeros(num_entries, dtype = torch.long) + feature_idx]
     print("feature_column", feature_column)
+    
+    # Find the possible values that can be inside the column (e.g., "Yes" and "No") and the number of occurrences
     possible_values, value_counts = torch.unique(feature_column, return_counts = True)
-    total_elements_in_node = torch.sum(value_counts)
     print(possible_values, value_counts)
 
     classification_counts = []
@@ -77,10 +79,19 @@ for feature_idx in range(0, num_features):
     for gini_vector, final_gini_vector in zip(gini_vectors, final_gini_vectors):
         gini_value = torch.sum(final_gini_vector, dim = 0) # Summation to find gini value
         gini_values_hashmap[gini_vector] = gini_value
+        feature_gini_vectors_hashmap[feature_idx].append(gini_vector)
         print(gini_vector, gini_value)
 
-    print(gini_values_hashmap)
-    print()
+print("Gini values hashmap:", gini_values_hashmap)
 
-    print("Final:", gini_values_hashmap)
-    print()
+# Calculating Gini-Split for each feature
+for feature_idx in range(0, num_features):
+    gini_vectors_for_feature = feature_gini_vectors_hashmap[feature_idx]
+    probabilities = torch.tensor([torch.sum(gini_vector) / num_entries for gini_vector in gini_vectors_for_feature])
+    gini_values = torch.tensor([gini_values_hashmap[gini_vector] for gini_vector in gini_vectors_for_feature])
+    print(gini_vectors_for_feature)
+    print(probabilities)
+    print(gini_values)
+    print(probabilities * gini_values)
+    gini_split = torch.sum(probabilities * gini_values, dim = 0)
+    print(f"Gini split for feature {feature_idx}: {gini_split}")
