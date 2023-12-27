@@ -33,14 +33,15 @@ num_entries, num_features = data.shape
 classes, classes_counts = torch.unique(labels, return_counts = True)
 print("classes:", classes, classes_counts)
 
+gini_values_hashmap = {} # Maps gini vectors to their corresponding gini values
+feature_gini_vectors_hashmap = {} # Maps each feature to their gini vectors
+
 for feature_idx in range(0, num_features):
     feature_column = data[torch.arange(num_entries), torch.zeros(num_entries, dtype = torch.long) + feature_idx]
     print("feature_column", feature_column)
     possible_values, value_counts = torch.unique(feature_column, return_counts = True)
     total_elements_in_node = torch.sum(value_counts)
     print(possible_values, value_counts)
-    
-
 
     classification_counts = []
     for classification_class in classes:
@@ -62,4 +63,24 @@ for feature_idx in range(0, num_features):
     gini_vectors = gini_matrix.T # Transpose the matrix to get the gini vectors, e.g., Gini(2, 0, 4), etc...
     print(gini_matrix)
     print(gini_vectors)
+    
+    # Finding gini values for each vector
+    gini_vector_sums = gini_vectors.sum(dim = 1, keepdim = True) # Find sums of each row vector
+    divided_gini_vectors = gini_vectors / gini_vector_sums # Convert 2 and 4 into (2/6) and (4/6), respectively
+    final_gini_vectors = divided_gini_vectors * (1 - divided_gini_vectors) # (2/6) * (1 - (2/6) For each item in the gini vector
+
+    print(gini_vector_sums)
+    print(divided_gini_vectors)
+    print(final_gini_vectors)
+
+    # Calculate and save the gini values for each gini vector inside the hashmap
+    for gini_vector, final_gini_vector in zip(gini_vectors, final_gini_vectors):
+        gini_value = torch.sum(final_gini_vector, dim = 0) # Summation to find gini value
+        gini_values_hashmap[gini_vector] = gini_value
+        print(gini_vector, gini_value)
+
+    print(gini_values_hashmap)
+    print()
+
+    print("Final:", gini_values_hashmap)
     print()
