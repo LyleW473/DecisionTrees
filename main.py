@@ -26,5 +26,4 @@ data = torch.tensor(data)
 # 0 = High, 1 = Low, 2 = Medium
 labels = torch.tensor([1, 2, 0, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2, 0, 1])
 
-decision_tree = DecisionTree()
-decision_tree.construct_tree(data = data, labels = labels)
+decision_tree = DecisionTree(data = data, labels = labels)
