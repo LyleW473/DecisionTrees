@@ -2,13 +2,19 @@ import torch
 from node import Node
 class DecisionTree:
 
-    def __init__(self, data, labels,):
+    def __init__(self, data, labels):
 
         self.classes = torch.unique(labels)
         self.num_classes = self.classes.shape[0]
-        print(self.num_classes, self.classes)
 
-        self.tree = Node(gini = 1, gini_index = None)
+        # Calculate the gini index and gini value for the first node
+        _, gini_index = torch.unique(labels, return_counts = True)
+        divide_counts = gini_index / torch.sum(gini_index, dim = 0)
+        probabilities = divide_counts * (1 - divide_counts)
+        gini_value = torch.sum(probabilities, dim = 0)
+
+        # Construct tree
+        self.tree = Node(gini = gini_value, gini_index = gini_index)
         self.tree = self._construct_tree(data, labels, self.tree)
         
     def _construct_tree(self, data, labels, node):
